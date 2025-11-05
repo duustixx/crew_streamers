@@ -85,7 +85,6 @@ mostrarHeader("Desafío 1 - Chat Rápido");
             <form method="POST">
                 <label for="viewers">¿Cuántos viewers hay en el chat? (50-200)</label>
                 <input type="number" id="viewers" name="viewers" 
-                       min="50" max="200" required
                        value="<?php echo isset($_SESSION['viewers_chat']) ? $_SESSION['viewers_chat'] : ''; ?>">
                 
                 <?php if ($error): ?>
