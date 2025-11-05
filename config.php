@@ -32,6 +32,61 @@ function logAccion($mensaje) {
     file_put_contents('logs/errores.log', $log, FILE_APPEND);
 }
 
+// FUNCIÓN PARA MOSTRAR HEADER
+function mostrarHeader($titulo_pagina = "Crew de Streamers") {
+    // Si el usuario no está logueado, no mostrar header
+    if (!isset($_SESSION['username_gamer'])) {
+        return;
+    }
+    
+    echo '
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>' . htmlspecialchars($titulo_pagina) . '</title>
+        <link rel="stylesheet" href="css/gaming-styles.css">
+    </head>
+    <body class="dark-theme">
+    
+    <header class="gaming-header">
+        <h1>🎮 Crew Manager</h1>
+        <div class="user-info">
+            <span>Bienvenido, ' . htmlspecialchars($_SESSION['username_gamer']) . '</span>
+            <span>Nivel: ' . htmlspecialchars($_SESSION['nivel_usuario']) . '</span>
+            <a href="logout.php" class="btn-logout">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <nav class="gaming-nav">
+        <a href="index.php">🏠 Home</a>
+        <a href="desafio1.php">🎯 Desafío 1 - Chat Rápido</a>
+        <a href="desafio2.php">🔄 Desafío 2 - Featured Streamers</a>
+        <a href="desafio3.php">⚔️ Desafío 3 - Torneos</a>
+        <a href="desafio4.php">🏆 Desafío 4 - Rankings</a>
+        <a href="desafio5.php">🤝 Desafío 5 - Sponsors</a>
+    </nav>
+    ';
+}
+
+// FUNCIÓN PARA MOSTRAR FOOTER
+function mostrarFooter() {
+    // Si el usuario no está logueado, no mostrar footer
+    if (!isset($_SESSION['username_gamer'])) {
+        return;
+    }
+    
+    echo '
+    <footer class="gaming-footer">
+        <p>Stats de sesión: Nivel ' . htmlspecialchars($_SESSION['nivel_usuario']) . ' | 
+           Desafíos completados: ' . count($_SESSION['desafios_completados']) . '</p>
+    </footer>
+    </body>
+    </html>
+    ';
+}
+
 // Iniciar sesión si es nuevo usuario
 if (!isset($_SESSION['username_gamer'])) {
     $_SESSION['nivel_usuario'] = 1;
