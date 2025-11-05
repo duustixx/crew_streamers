@@ -36,7 +36,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['viewers'])) {
             $avatares = glob('images/streamers/*.{.jpg,jpeg,png,gif', GLOB_BRACE);
             $ganadores = [];
 
-            for($i = 0; i < $num_ganadores; $i++) {
+            for($i = 0; $i < $num_ganadores; $i++) {
                 $ganadores[] = $avatares[array_rand($avatares)];
             }
 
