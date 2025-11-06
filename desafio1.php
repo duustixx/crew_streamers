@@ -11,6 +11,7 @@ $error = '';
 $resultado = '';
 $ganadores = [];
 
+// Condicion que se ejecuta al enviar el formulario: Realizar sorteo
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['viewers'])) {
     $viewers = trim($_POST['viewers']);
     
@@ -79,40 +80,9 @@ mostrarHeader("Desafío 1 - Chat Rápido");
     <h1>🎯 Desafío 1 - El Reto del Chat Rápido</h1>
     
     <div class="challenge-container">
-        <div class="form-section">
-            <h2>Configuración del Sorteo</h2>
-            
-            <form method="POST">
-                <label for="viewers">¿Cuántos viewers hay en el chat? (50-200)</label>
-                <input type="number" id="viewers" name="viewers" 
-                       value="<?php echo isset($_SESSION['viewers_chat']) ? $_SESSION['viewers_chat'] : ''; ?>">
-                
-                <?php if ($error): ?>
-                    <div class="error">
-                        <?php echo $error; ?>
-                    </div>
-                <?php endif; ?>
-                
-                <button type="submit">🎲 Realizar Sorteo</button>
-            </form>
-        </div>
-        
-        <?php if ($resultado): ?>
-        <div class="result-section">
-            <h2><?php echo $resultado; ?></h2>
-            <div class="ganadores-grid">
-                <?php
-                if (isset($ganadores)) {
-                    foreach ($ganadores as $ganador) {
-                        echo "<img src='$ganador' alt='Ganador' class='avatar'>";
-                    }
-                }
-                ?>
-            </div>
-            <p class="success">✅ Sorteo registrado en el log correctamente</p>
-            <p class="success">🎉 ¡Desafío completado! Nivel subido a <?php echo $_SESSION['nivel_usuario']; ?></p>
-        </div>
-        <?php endif; ?>
+        <?php
+        formularioDesafio1($error,$resultado,$ganadores);
+        ?>
     </div>
 </main>
 

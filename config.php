@@ -1,7 +1,10 @@
 <?php
 session_start();
 
+/////////////////////////////////////////////////////////////////////////////////////////
 // Funciones para archivos
+/////////////////////////////////////////////////////////////////////////////////////////
+
 function leerJSON($archivo) {
     if (file_exists($archivo)) {
         $contenido = file_get_contents($archivo);
@@ -31,6 +34,11 @@ function logAccion($mensaje) {
     $log = "[$fecha] $mensaje" . PHP_EOL;
     file_put_contents('logs/errores.log', $log, FILE_APPEND);
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Funcion para LOGOUT
+/////////////////////////////////////////////////////////////////////////////////////////
+
 function logout() {
     // Registrar en log la acción de logout
     if(isset($_SESSION['username_gamer'])) {
@@ -46,7 +54,11 @@ function logout() {
 
 }
 
-// FUNCIÓN PARA MOSTRAR HEADER
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Funciones para ESTRUCTURA o ESQUELETO del SITE
+/////////////////////////////////////////////////////////////////////////////////////////
+
 function mostrarHeader($titulo_pagina = "Crew de Streamers") {
     // Si el usuario no está logueado, no mostrar header
     if (!isset($_SESSION['username_gamer'])) {
@@ -84,7 +96,6 @@ function mostrarHeader($titulo_pagina = "Crew de Streamers") {
     ';
 }
 
-// FUNCIÓN PARA MOSTRAR FOOTER
 function mostrarFooter() {
     // Si el usuario no está logueado, no mostrar footer
     if (!isset($_SESSION['username_gamer'])) {
@@ -101,33 +112,58 @@ function mostrarFooter() {
     ';
 }
 
-// Iniciar sesión si es nuevo usuario
-if (!isset($_SESSION['username_gamer'])) {
-    $_SESSION['nivel_usuario'] = 1;
-    $_SESSION['desafios_completados'] = [];
-    $_SESSION['timestamp_inicio'] = time();
-}
 
-// Manejar cookies de racha de días
-if (isset($_COOKIE['ultima_visita'])) {
-    $ultima_visita = $_COOKIE['ultima_visita'];
-    $hoy = date('Y-m-d');
-    
-    if ($ultima_visita != $hoy) {
-        // Nuevo día
-        $racha_actual = isset($_COOKIE['racha_dias']) ? $_COOKIE['racha_dias'] : 0;
-        setcookie('racha_dias', $racha_actual + 1, time() + (30 * 24 * 60 * 60));
+/////////////////////////////////////////////////////////////////////////////////////////
+// Funciones para imprimir HTMLs (formularios...)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function formularioDesafio1($error,$resultado,$ganadores) {
+
+    $viewers_chat = isset($_SESSION['viewers_chat']) ? $_SESSION['viewers_chat'] : '';
+
+
+    $form = <<<HTML
+        <div class="form-section">
+            <h2>Configuración del Sorteo</h2>
+            
+            <form method="POST">
+                <label for="viewers">¿Cuántos viewers hay en el chat? (50-200)</label>
+                <input type="number" id="viewers" name="viewers" 
+                       value="{$viewers_chat}">
+    HTML;       
+
+    // Si hay error, añadir bloque de error
+    if ($error) {
+    $form .= <<<HTML
+            <div class="error">$error</div>
+    HTML;
     }
-} else {
-    // Primera visita
-    setcookie('racha_dias', 1, time() + (30 * 24 * 60 * 60));
+
+    //Cierra el formulario
+    $form .= <<<HTML
+                <button type="submit">Iniciar Sorteo</button>
+            </form>
+        </div>
+    HTML;                
+        
+    echo $form;
+
+if ($resultado) {
+    ?>
+    <div class="result-section">
+        <h2><?= $resultado ?></h2>
+
+        <?php if (isset($ganadores)) : ?>
+            <div class="ganadores-grid">
+                <?php foreach ($ganadores as $ganador) : ?>
+                    <img src="<?= $ganador ?>" alt="Ganador" class="avatar">
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <p class="success">✅ Sorteo registrado en el log correctamente</p>
+        <p class="success">🎉 ¡Desafío completado! Nivel subido a <?= $_SESSION['nivel_usuario'] ?></p>
+    </div>
+    <?php
 }
-
-setcookie('ultima_visita', date('Y-m-d'), time() + (30 * 24 * 60 * 60));
-
-// Contador de visitas
-$contador_archivo = 'data/visitas.txt';
-$visitas = file_exists($contador_archivo) ? (int)file_get_contents($contador_archivo) : 0;
-$visitas++;
-file_put_contents($contador_archivo, $visitas);
-?>
+}
