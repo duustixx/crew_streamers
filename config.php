@@ -31,6 +31,20 @@ function logAccion($mensaje) {
     $log = "[$fecha] $mensaje" . PHP_EOL;
     file_put_contents('logs/errores.log', $log, FILE_APPEND);
 }
+function logout() {
+    // Registrar en log la acción de logout
+    if(isset($_SESSION['username_gamer'])) {
+        $username = $_SESSION['username_gamer'];
+        $duracion_sesion = time() - $_SESSION['timestamp_inicio'];
+        $minutos = floor($duracion_sesion / 60);
+
+        $mensaje_log = "LOGOUT - Usuario: $username, Duración sesión: $minutos minutos, Nivel: {$_SESSION['nivel_usuario']}";
+        logAccion($mensaje_log);
+    }
+
+    
+
+}
 
 // FUNCIÓN PARA MOSTRAR HEADER
 function mostrarHeader($titulo_pagina = "Crew de Streamers") {
