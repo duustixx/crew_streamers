@@ -417,3 +417,164 @@ function mostrarLogin(){
     </html>';
     exit;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCION PARA DESAFIO 3
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function generarEnfrentamientosTorneo($num_equipos) {
+    $enfrentamientos = array();
+    $equipos = range(1, $num_equipos);
+    shuffle($equipos); // Mezclar equipos aleatoriamente
+    
+    // Generar enfrentamientos (sistema de eliminación directa)
+    for($i = 0; $i < $num_equipos; $i += 2) {
+        if(isset($equipos[$i+1])) {
+            $enfrentamientos[] = array(
+                'equipo1' => $equipos[$i],
+                'equipo2' => $equipos[$i+1],
+                'ronda' => 'Cuartos de final'
+            );
+        }
+    }
+    
+    return $enfrentamientos;
+}
+
+function formularioTorneos($error, $resultado) {
+    echo '
+    <div class="form-section">
+        <h3>Configurar Torneo</h3>
+        
+        <form method="POST">
+            <label for="equipos">Número de equipos (4-16):</label>
+            <input type="number" id="equipos" name="equipos" min="4" max="16" value="8" required>';
+    
+    if ($error) {
+        echo '<div class="error">' . $error . '</div>';
+    }
+    
+    echo '
+            <button type="submit">Generar Enfrentamientos</button>
+        </form>
+    </div>';
+    
+    if ($resultado) {
+        echo '
+        <div class="result-section">
+            <h3>' . $resultado . '</h3>
+            <div class="enfrentamientos-grid">';
+        
+        $enfrentamientos = generarEnfrentamientosTorneo($_POST['equipos']);
+        foreach($enfrentamientos as $index => $enfrentamiento) {
+            echo '
+                <div class="enfrentamiento-card">
+                    <h4>Enfrentamiento ' . ($index + 1) . '</h4>
+                    <p>🏆 Equipo ' . $enfrentamiento['equipo1'] . ' vs Equipo ' . $enfrentamiento['equipo2'] . '</p>
+                    <span class="ronda">' . $enfrentamiento['ronda'] . '</span>
+                </div>';
+        }
+        
+        echo '
+            </div>
+            <p class="success">✅ Torneo registrado en el log correctamente</p>
+            <p class="success">🎉 ¡Desafío completado! Nivel subido a ' . obtenerNivelUsuario() . '</p>
+        </div>';
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCIONES PARA DESAFÍO 4 - RANKINGS
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function procesarRankings($streamers_data) {
+    $lineas = explode("\n", $streamers_data);
+    $streamers = array();
+    
+    foreach($lineas as $linea) {
+        $datos = explode(',', trim($linea));
+        if(count($datos) >= 2) {
+            $nombre = trim($datos[0]);
+            $viewers = is_numeric(trim($datos[1])) ? (int)trim($datos[1]) : 0;
+            
+            if(!empty($nombre) && $viewers > 0) {
+                $streamers[] = array(
+                    'nombre' => $nombre,
+                    'viewers' => $viewers
+                );
+            }
+        }
+    }
+    
+    // Ordenar por viewers (descendente)
+    usort($streamers, function($a, $b) {
+        return $b['viewers'] - $a['viewers'];
+    });
+    
+    return $streamers;
+}
+
+function formularioRankings($error, $resultado, $ranking_data) {
+    echo '
+    <div class="form-section">
+        <h3>Generar Ranking</h3>
+        <p>Ingresa los streamers y sus viewers (formato: nombre,viewers):</p>
+        
+        <form method="POST">
+            <label for="streamers_data">Datos de streamers:</label>
+            <textarea id="streamers_data" name="streamers_data" rows="6" placeholder="Ejemplo:
+StreamerPro,1500
+GameMaster,800
+EliteGamer,1200
+Champion,950" required></textarea>';
+    
+    if ($error) {
+        echo '<div class="error">' . $error . '</div>';
+    }
+    
+    echo '
+            <button type="submit">Generar Ranking</button>
+        </form>
+    </div>';
+    
+    if ($resultado && !empty($ranking_data)) {
+        echo '
+        <div class="result-section">
+            <h3>' . $resultado . '</h3>
+            <div class="ranking-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Posición</th>
+                            <th>Streamer</th>
+                            <th>Viewers</th>
+                            <th>Medalla</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+        
+        foreach($ranking_data as $index => $streamer) {
+            $medalla = '';
+            if($index == 0) $medalla = '🥇';
+            elseif($index == 1) $medalla = '🥈';
+            elseif($index == 2) $medalla = '🥉';
+            else $medalla = '🎮';
+            
+            echo '
+                        <tr>
+                            <td>' . ($index + 1) . 'º</td>
+                            <td>' . htmlspecialchars($streamer['nombre']) . '</td>
+                            <td>' . $streamer['viewers'] . '</td>
+                            <td>' . $medalla . '</td>
+                        </tr>';
+        }
+        
+        echo '
+                    </tbody>
+                </table>
+            </div>
+            <p class="success">✅ Ranking registrado en el log correctamente</p>
+            <p class="success">🎉 ¡Desafío completado! Nivel subido a ' . obtenerNivelUsuario() . '</p>
+        </div>';
+    }
+}
