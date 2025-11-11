@@ -2,6 +2,13 @@
 session_start();
 
 /////////////////////////////////////////////////////////////////////////////////////////
+// Procesar el logout si se solicita
+/////////////////////////////////////////////////////////////////////////////////////////
+if(isset($_GET['logout']) && $_GET['logout'] === 'true') {
+    logout(); //Llama a la función de logout y hace exit
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // Funciones para archivos
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -340,6 +347,70 @@ function formularioDesafio1($error, $resultado, $ganadores) {
         </div>
         <?php
     }
+}
+
+function formularioDesafio2($mensaje, $streamers) {
+    // Asegurarnos que $streamers es un array
+    if (!is_array($streamers)) {
+        $streamers = array();
+    }
+    
+    $html = <<<HTML
+        <div class="info-section">
+            <h2>📋 Instrucciones</h2>
+            <p>Tu plataforma tiene una sección "Featured" que rota streamers cada día:</p>
+            <ul>
+                <li>El streamer destacado del día anterior se retira (eliminar el primer elemento)</li>
+                <li>Llega un nuevo streamer invitado</li>
+                <li>El orden se guarda en archivo JSON para persistencia</li>
+            </ul>
+        </div>
+    HTML;
+
+    if ($mensaje) {
+        $clase = strpos($mensaje, '✅') !== false ? 'success' : 'error';
+        $html .= <<<HTML
+            <div class="$clase">$mensaje</div>
+        HTML;
+    }
+
+    $html .= <<<HTML
+        <div class="actions-section">
+            <form method="POST" class="action-form">
+                <button type="submit" name="rotar" class="btn-action">🔄 Rotar Featured Streamers</button>
+            </form>
+            
+            <form method="POST" class="action-form">
+                <button type="submit" name="reset" class="btn-reset">🔄 Reset Featured</button>
+            </form>
+        </div>
+
+        <div class="streamers-section">
+            <h2>🎬 Streamers Destacados ({$GLOBALS['numero_streamers']})</h2>
+            <div class="avatars-container">
+    HTML;
+
+    // Solo mostrar si hay streamers
+    if (!empty($streamers)) {
+        foreach ($streamers as $index => $streamer) {
+            $index_mas_uno = $index + 1;
+            $html .= <<<HTML
+                <div class="streamer-card">
+                    <img src="$streamer" alt="Streamer $index_mas_uno" class="avatar">
+                    <small>Posición $index_mas_uno</small>
+                </div>
+            HTML;
+        }
+    } else {
+        $html .= '<p>No hay streamers disponibles</p>';
+    }
+
+    $html .= <<<HTML
+            </div>
+        </div>
+    HTML;
+
+    echo $html;
 }
 
 //Mostrar la seccion de bienvenida:
