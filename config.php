@@ -445,14 +445,30 @@ function mostrarSeccionStreamers() {
         $mostrar = $numero_avatares;
     }
 
+    // Lista de nombres reales de streamers populares
+    $nombres_streamers = [
+        'Ibai', 'Auronplay', 'TheGrefg', 'Rubius', 'Illojuan',
+        'xQc', 'Shroud', 'Ninja', 'Pokimane', 'Amouranth',
+        'Kai Cenat', 'Adin Ross', 'SypherPK', 'Tfue', 'Myth',
+        'TimTheTatman', 'DrDisrespect', 'Ludwig', 'Mizkif', 'Asmongold',
+        'Quackity', 'Juja', 'Vegetta', 'Willyrex', 'Lolito',
+        'Alexelcapo', 'ByViruzz', 'Reborn', 'Komanche', 'Zeling'
+    ];
+
     echo '<section class="streamers-section">
         <h3>🎮 Tu Crew de Streamers:</h3>
         <div class="streamers-grid">';
 
     for($i = 0; $i < $mostrar; $i++){
+        if (isset($nombres_streamers[$i])) {
+            $nombre = $nombres_streamers[$i];
+        } else {
+            $nombre = 'Streamer ' . ($i + 1);
+        }
+        
         echo '<div class="avatar-card">';
-        echo '<img src="' . $avatares[$i] . '" alt="Streamer' . ($i+1) . '">';
-        echo '<span>Streamer ' . ($i+1) . '</span>';
+        echo '<img src="' . $avatares[$i] . '" alt="' . $nombre . '">';
+        echo '<span>' . $nombre . '</span>';
         echo '</div>';
     }
 
@@ -493,64 +509,210 @@ function mostrarLogin(){
 // FUNCION PARA DESAFIO 3
 /////////////////////////////////////////////////////////////////////////////////////////
 
-function generarEnfrentamientosTorneo($num_equipos) {
-    $enfrentamientos = array();
-    $equipos = range(1, $num_equipos);
-    shuffle($equipos); // Mezclar equipos aleatoriamente
+function generarRosterStreamers() {
+       $juegos = ["Fortnite", "Valorant", "Minecraft", "LOL", "Among Us", "Fall Guys", "Rocket League"];
+    $nombres_reales = [
+        "Alex Martínez", "Sara García", "Carlos López", "Marta Rodríguez", "David Fernández",
+        "Laura González", "Javier Pérez", "Elena Sánchez", "Daniel Romero", "Ana Torres"
+    ];
     
-    // Generar enfrentamientos (sistema de eliminación directa)
-    for($i = 0; $i < $num_equipos; $i += 2) {
-        if(isset($equipos[$i+1])) {
-            $enfrentamientos[] = array(
-                'equipo1' => $equipos[$i],
-                'equipo2' => $equipos[$i+1],
-                'ronda' => 'Cuartos de final'
-            );
+    $usernames = [
+        "TheGamer2024", "ProPlayer99", "EpicStreamer", "GameMaster", "EliteWarrior",
+        "ShadowHunter", "NeonBlade", "CyberNinja", "PixelKing", "StreamQueen"
+    ];
+    
+    // Obtener imágenes reales que existen
+    $avatares = glob('imagenes/streamers/*.{png,jpg,jpeg,gif}', GLOB_BRACE);
+    
+    $roster = array();
+    
+    for ($i = 0; $i < 10; $i++) {
+        $avatar = isset($avatares[$i]) ? basename($avatares[$i]) : 'default_avatar.jpg';
+        
+        $streamer = array(
+            'username' => $usernames[$i],
+            'nombre_real' => $nombres_reales[$i],
+            'followers' => rand(5000, 100000),
+            'avatar' => $avatar,
+            'juego_favorito' => $juegos[array_rand($juegos)]
+        );
+        $roster[] = $streamer;
+    }
+    
+    return $roster;
+}
+
+function guardarRoster($roster) {
+    $archivo = 'data/roster_completo.json';
+    guardarJSON($archivo, $roster);
+}
+
+function cargarRoster() {
+    $archivo = 'data/roster_completo.json';
+    return leerJSON($archivo);
+}
+
+function dividirEquipos($roster) {
+    $teamChaos = array();
+    $teamOrder = array();
+    
+    foreach ($roster as $index => $streamer) {
+        if ($index % 2 == 0) {
+            $teamChaos[] = $streamer;
+        } else {
+            $teamOrder[] = $streamer;
         }
     }
     
-    return $enfrentamientos;
+    return array('chaos' => $teamChaos, 'order' => $teamOrder);
+}
+
+function calcularTotalFollowers($equipo) {
+    $total = 0;
+    foreach ($equipo as $streamer) {
+        $total += $streamer['followers'];
+    }
+    return $total;
+}
+
+function encontrarMVP($roster) {
+    $max_followers = 0;
+    $mvp = array();
+    
+    foreach ($roster as $streamer) {
+        if ($streamer['followers'] > $max_followers) {
+            $max_followers = $streamer['followers'];
+            $mvp = array($streamer);
+        } elseif ($streamer['followers'] == $max_followers) {
+            $mvp[] = $streamer;
+        }
+    }
+    
+    return $mvp;
+}
+
+function encontrarRookie($roster) {
+    $min_followers = PHP_INT_MAX;
+    $rookie = array();
+    
+    foreach ($roster as $streamer) {
+        if ($streamer['followers'] < $min_followers) {
+            $min_followers = $streamer['followers'];
+            $rookie = array($streamer);
+        } elseif ($streamer['followers'] == $min_followers) {
+            $rookie[] = $streamer;
+        }
+    }
+    
+    return $rookie;
+}
+
+function mostrarEquiposTorneo($teamChaos, $teamOrder, $totalChaos, $totalOrder, $mvp, $rookie) {
+    echo '
+    <div class="torneo-header">
+        <div class="equipo-info chaos">
+            <h3>🔴 Team Chaos</h3>
+            <p class="total-followers">' . number_format($totalChaos) . ' followers</p>
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="equipo-info order">
+            <h3>🔵 Team Order</h3>
+            <p class="total-followers">' . number_format($totalOrder) . ' followers</p>
+        </div>
+    </div>';
+    
+    echo '<div class="equipos-container">';
+    
+    // Team Chaos
+    echo '<div class="equipo equipo-chaos">';
+    echo '<h4>🔴 Team Chaos</h4>';
+    echo '<div class="streamers-equipo">';
+    foreach ($teamChaos as $streamer) {
+        echo '
+        <div class="streamer-card">
+            <img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">
+            <div class="streamer-info">
+                <h5>' . $streamer['username'] . '</h5>
+                <p class="nombre-real">' . $streamer['nombre_real'] . '</p>
+                <p class="followers">' . number_format($streamer['followers']) . ' followers</p>
+                <p class="juego">🎮 ' . $streamer['juego_favorito'] . '</p>
+            </div>
+        </div>';
+    }
+    echo '</div></div>';
+    
+    // Team Order
+    echo '<div class="equipo equipo-order">';
+    echo '<h4>🔵 Team Order</h4>';
+    echo '<div class="streamers-equipo">';
+    foreach ($teamOrder as $streamer) {
+        echo '
+        <div class="streamer-card">
+            <img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">
+            <div class="streamer-info">
+                <h5>' . $streamer['username'] . '</h5>
+                <p class="nombre-real">' . $streamer['nombre_real'] . '</p>
+                <p class="followers">' . number_format($streamer['followers']) . ' followers</p>
+                <p class="juego">🎮 ' . $streamer['juego_favorito'] . '</p>
+            </div>
+        </div>';
+    }
+    echo '</div></div>';
+    
+    echo '</div>';
+    
+    // MVP y Rookie
+    echo '<div class="premios-torneo">';
+    
+    // MVP
+    echo '<div class="premio mvp">';
+    echo '<h4>🏆 MVP del Torneo</h4>';
+    foreach ($mvp as $streamer) {
+        echo '
+        <div class="premiado">
+            <img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">
+            <div>
+                <h5>' . $streamer['username'] . '</h5>
+                <p>' . number_format($streamer['followers']) . ' followers</p>
+            </div>
+        </div>';
+    }
+    echo '</div>';
+    
+    // Rookie
+    echo '<div class="premio rookie">';
+    echo '<h4>⭐ Rookie del Torneo</h4>';
+    foreach ($rookie as $streamer) {
+        echo '
+        <div class="premiado">
+            <img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">
+            <div>
+                <h5>' . $streamer['username'] . '</h5>
+                <p>' . number_format($streamer['followers']) . ' followers</p>
+            </div>
+        </div>';
+    }
+    echo '</div>';
+    
+    echo '</div>';
 }
 
 function formularioTorneos($error, $resultado) {
     echo '
     <div class="form-section">
-        <h3>Configurar Torneo</h3>
-        
         <form method="POST">
-            <label for="equipos">Número de equipos (4-16):</label>
-            <input type="number" id="equipos" name="equipos" min="4" max="16" value="8" required>';
+            <div class="form-actions">
+                <button type="submit" name="generar_roster" class="btn-neon">🎲 Generar Nuevo Roster</button>
+            </div>
+        </form>
+    </div>';
     
     if ($error) {
         echo '<div class="error">' . $error . '</div>';
     }
     
-    echo '
-            <button type="submit">Generar Enfrentamientos</button>
-        </form>
-    </div>';
-    
     if ($resultado) {
-        echo '
-        <div class="result-section">
-            <h3>' . $resultado . '</h3>
-            <div class="enfrentamientos-grid">';
-        
-        $enfrentamientos = generarEnfrentamientosTorneo($_POST['equipos']);
-        foreach($enfrentamientos as $index => $enfrentamiento) {
-            echo '
-                <div class="enfrentamiento-card">
-                    <h4>Enfrentamiento ' . ($index + 1) . '</h4>
-                    <p>🏆 Equipo ' . $enfrentamiento['equipo1'] . ' vs Equipo ' . $enfrentamiento['equipo2'] . '</p>
-                    <span class="ronda">' . $enfrentamiento['ronda'] . '</span>
-                </div>';
-        }
-        
-        echo '
-            </div>
-            <p class="success">✅ Torneo registrado en el log correctamente</p>
-            <p class="success">🎉 ¡Desafío completado! Nivel subido a ' . obtenerNivelUsuario() . '</p>
-        </div>';
+        echo '<div class="success">' . $resultado . '</div>';
     }
 }
 
@@ -558,94 +720,182 @@ function formularioTorneos($error, $resultado) {
 // FUNCIONES PARA DESAFÍO 4 - RANKINGS
 /////////////////////////////////////////////////////////////////////////////////////////
 
-function procesarRankings($streamers_data) {
-    $lineas = explode("\n", $streamers_data);
-    $streamers = array();
+function generarRankingFollowers($roster) {
+    // Ordenar por followers (descendente)
+    $ranking = $roster;
+    usort($ranking, function($a, $b) {
+        return $b['followers'] - $a['followers'];
+    });
+    return $ranking;
+}
+
+function generarRankingAlfabetico($roster) {
+    // Ordenar alfabéticamente por username
+    $ranking = $roster;
+    usort($ranking, function($a, $b) {
+        return strcmp($a['username'], $b['username']);
+    });
+    return $ranking;
+}
+
+function buscarStreamer($roster, $termino) {
+    $termino = strtolower(trim($termino));
     
-    foreach($lineas as $linea) {
-        $datos = explode(',', trim($linea));
-        if(count($datos) >= 2) {
-            $nombre = trim($datos[0]);
-            $viewers = is_numeric(trim($datos[1])) ? (int)trim($datos[1]) : 0;
-            
-            if(!empty($nombre) && $viewers > 0) {
-                $streamers[] = array(
-                    'nombre' => $nombre,
-                    'viewers' => $viewers
-                );
-            }
+    // Buscar streamer legendario primero
+    if ($termino == 'legendkiller2024') {
+        return array(
+            'username' => 'LegendKiller2024',
+            'nombre_real' => 'Alex Rodríguez',
+            'followers' => 150000,
+            'avatar' => 'legend.jpg',
+            'juego_favorito' => 'Valorant',
+            'es_legendario' => true
+        );
+    }
+    
+    // Buscar en el roster normal
+    foreach ($roster as $streamer) {
+        if (strtolower($streamer['username']) == $termino) {
+            $streamer['encontrado'] = true;
+            return $streamer;
         }
     }
     
-    // Ordenar por viewers (descendente)
-    usort($streamers, function($a, $b) {
-        return $b['viewers'] - $a['viewers'];
-    });
-    
-    return $streamers;
+    return null;
 }
 
-function formularioRankings($error, $resultado, $ranking_data) {
-    echo '
-    <div class="form-section">
-        <h3>Generar Ranking</h3>
-        <p>Ingresa los streamers y sus viewers (formato: nombre,viewers):</p>
+function logBusqueda($termino, $encontrado) {
+    $fecha = date('Y-m-d H:i:s');
+    $resultado = $encontrado ? 'ENCONTRADO' : 'NO_ENCONTRADO';
+    $mensaje = "[$fecha] Búsqueda: '$termino' - $resultado";
+    escribirTXT('logs/busquedas.txt', $mensaje);
+}
+
+function mostrarRankingFollowers($ranking) {
+    echo '<div class="ranking-podio">';
+    echo '<h4>🔥 Top Followers</h4>';
+    
+    // Podio para los top 3
+    if (count($ranking) >= 3) {
+        echo '<div class="podio-top3">';
         
-        <form method="POST">
-            <label for="streamers_data">Datos de streamers:</label>
-            <textarea id="streamers_data" name="streamers_data" rows="6" placeholder="Ejemplo:
-StreamerPro,1500
-GameMaster,800
-EliteGamer,1200
-Champion,950" required></textarea>';
+        // Segundo lugar
+        echo '<div class="podio-item segundo">';
+        echo '<div class="medalla">🥈</div>';
+        echo '<img src="imagenes/streamers/' . $ranking[1]['avatar'] . '" alt="' . $ranking[1]['username'] . '">';
+        echo '<h5>' . $ranking[1]['username'] . '</h5>';
+        echo '<p>' . number_format($ranking[1]['followers']) . ' followers</p>';
+        echo '</div>';
+        
+        // Primer lugar
+        echo '<div class="podio-item primero">';
+        echo '<div class="medalla">🥇</div>';
+        echo '<img src="imagenes/streamers/' . $ranking[0]['avatar'] . '" alt="' . $ranking[0]['username'] . '">';
+        echo '<h5>' . $ranking[0]['username'] . '</h5>';
+        echo '<p>' . number_format($ranking[0]['followers']) . ' followers</p>';
+        echo '</div>';
+        
+        // Tercer lugar
+        echo '<div class="podio-item tercero">';
+        echo '<div class="medalla">🥉</div>';
+        echo '<img src="imagenes/streamers/' . $ranking[2]['avatar'] . '" alt="' . $ranking[2]['username'] . '">';
+        echo '<h5>' . $ranking[2]['username'] . '</h5>';
+        echo '<p>' . number_format($ranking[2]['followers']) . ' followers</p>';
+        echo '</div>';
+        
+        echo '</div>';
+    }
+    
+    // Resto del ranking
+    echo '<div class="ranking-lista">';
+    for ($i = 3; $i < count($ranking); $i++) {
+        $posicion = $i + 1;
+        echo '
+        <div class="ranking-item">
+            <span class="posicion">' . $posicion . 'º</span>
+            <img src="imagenes/streamers/' . $ranking[$i]['avatar'] . '" alt="' . $ranking[$i]['username'] . '">
+            <div class="info">
+                <h5>' . $ranking[$i]['username'] . '</h5>
+                <p>' . number_format($ranking[$i]['followers']) . ' followers</p>
+            </div>
+            <span class="juego">🎮 ' . $ranking[$i]['juego_favorito'] . '</span>
+        </div>';
+    }
+    echo '</div>';
+    echo '</div>';
+}
+
+function mostrarRankingAlfabetico($ranking) {
+    echo '<div class="ranking-alfabetico">';
+    echo '<h4>📋 Orden Alfabético</h4>';
+    echo '<div class="lista-alfabetica">';
+    
+    foreach ($ranking as $streamer) {
+        $letra = strtoupper(substr($streamer['username'], 0, 1));
+        echo '
+        <div class="item-alfabetico">
+            <span class="letra-indicador">' . $letra . '</span>
+            <img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">
+            <div class="info">
+                <h5>' . $streamer['username'] . '</h5>
+                <p class="nombre-real">' . $streamer['nombre_real'] . '</p>
+            </div>
+            <span class="followers">' . number_format($streamer['followers']) . ' 🎯</span>
+        </div>';
+    }
+    
+    echo '</div>';
+    echo '</div>';
+}
+
+function mostrarResultadoBusqueda($streamer, $termino) {
+    if ($streamer) {
+        echo '<div class="resultado-busqueda encontrado">';
+        echo '<div class="success-header">';
+        echo '✅ ¡Encontrado!';
+        if (isset($streamer['es_legendario'])) {
+            echo ' <span class="legend-badge">🌟 LEGENDARIO</span>';
+        }
+        echo '</div>';
+        
+        echo '<div class="streamer-encontrado">';
+        echo '<img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">';
+        echo '<div class="streamer-info">';
+        echo '<h4>' . $streamer['username'] . '</h4>';
+        echo '<p class="nombre-real">' . $streamer['nombre_real'] . '</p>';
+        echo '<p class="followers">' . number_format($streamer['followers']) . ' followers</p>';
+        echo '<p class="juego">🎮 ' . $streamer['juego_favorito'] . '</p>';
+        if (isset($streamer['es_legendario'])) {
+            echo '<p class="legend-desc">🌟 Streamer legendario con habilidades extraordinarias</p>';
+        }
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+    } else {
+        echo '<div class="resultado-busqueda no-encontrado">';
+        echo '<div class="error-header">❌ No existe ese username en tu crew</div>';
+        echo '<p>Intenta con otro nombre o busca al legendario <strong>LegendKiller2024</strong></p>';
+        echo '</div>';
+    }
+}
+
+function formularioRankings($error, $termino_busqueda = '') {
+    echo '
+    <div class="search-section">
+        <h3>🔍 Buscador de Legends</h3>
+        <form method="POST" class="search-form">
+            <div class="search-container">
+                <input type="text" name="busqueda" placeholder="Buscar streamer por username..." 
+                       value="' . htmlspecialchars($termino_busqueda) . '" required
+                       pattern="[a-zA-Z0-9_-]{3,20}"
+                       title="Solo letras, números, guiones y guiones bajos (3-20 caracteres)">
+                <button type="submit" name="buscar" class="btn-search">🔍 Buscar</button>
+            </div>
+        </form>';
     
     if ($error) {
         echo '<div class="error">' . $error . '</div>';
     }
     
-    echo '
-            <button type="submit">Generar Ranking</button>
-        </form>
-    </div>';
-    
-    if ($resultado && !empty($ranking_data)) {
-        echo '
-        <div class="result-section">
-            <h3>' . $resultado . '</h3>
-            <div class="ranking-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Posición</th>
-                            <th>Streamer</th>
-                            <th>Viewers</th>
-                            <th>Medalla</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-        
-        foreach($ranking_data as $index => $streamer) {
-            $medalla = '';
-            if($index == 0) $medalla = '🥇';
-            elseif($index == 1) $medalla = '🥈';
-            elseif($index == 2) $medalla = '🥉';
-            else $medalla = '🎮';
-            
-            echo '
-                        <tr>
-                            <td>' . ($index + 1) . 'º</td>
-                            <td>' . htmlspecialchars($streamer['nombre']) . '</td>
-                            <td>' . $streamer['viewers'] . '</td>
-                            <td>' . $medalla . '</td>
-                        </tr>';
-        }
-        
-        echo '
-                    </tbody>
-                </table>
-            </div>
-            <p class="success">✅ Ranking registrado en el log correctamente</p>
-            <p class="success">🎉 ¡Desafío completado! Nivel subido a ' . obtenerNivelUsuario() . '</p>
-        </div>';
-    }
+    echo '</div>';
 }

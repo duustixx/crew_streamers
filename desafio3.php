@@ -14,23 +14,47 @@ if(!isset($_SESSION['username_gamer'])) {
 
 $error = '';
 $resultado = '';
+$mostrar_equipos = false;
+$teamChaos = array();
+$teamOrder = array();
+$totalChaos = 0;
+$totalOrder = 0;
+$mvp = array();
+$rookie = array();
 
-// Procesar formulario de torneos
-if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['equipos'])) {
-    $equipos = trim($_POST['equipos']);
+// Procesar formulario
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['generar_roster'])) {
+        // Generar nuevo roster
+        $roster = generarRosterStreamers();
+        guardarRoster($roster);
+        $resultado = "¡Nuevo roster generado exitosamente!";
+        $mostrar_equipos = true;
+        
+    } elseif (isset($_POST['cargar_roster'])) {
+        // Cargar roster existente
+        $roster = cargarRoster();
+        if (!empty($roster)) {
+            $resultado = "Roster cargado exitosamente";
+            $mostrar_equipos = true;
+        } else {
+            $error = "No hay roster guardado. Genera uno nuevo primero.";
+        }
+    }
     
-    // Validar
-    if(empty($equipos)) {
-        $error = 'Debes ingresar el número de equipos';
-    } elseif(!is_numeric($equipos) || $equipos < 4 || $equipos > 16) {
-        $error = 'El número de equipos debe ser entre 4 y 16';
-    } else {
-        // Generar enfrentamientos
-        $enfrentamientos = generarEnfrentamientosTorneo($equipos);
-        $resultado = "¡Torneo configurado con $equipos equipos!";
+    if ($mostrar_equipos && isset($roster)) {
+        $equipos = dividirEquipos($roster);
+        $teamChaos = $equipos['chaos'];
+        $teamOrder = $equipos['order'];
+        $totalChaos = calcularTotalFollowers($teamChaos);
+        $totalOrder = calcularTotalFollowers($teamOrder);
+        $mvp = encontrarMVP($roster);
+        $rookie = encontrarRookie($roster);
         
         // Registrar en log
-        $mensaje_log = "TORNEO - Usuario: " . obtenerUsername() . ", Equipos: $equipos";
+        $mensaje_log = "TORNEO - Usuario: " . obtenerUsername() . 
+                      ", Team Chaos: " . count($teamChaos) . " streamers, " . $totalChaos . " followers" .
+                      ", Team Order: " . count($teamOrder) . " streamers, " . $totalOrder . " followers";
         logAccion($mensaje_log);
         
         // Completar desafío si no estaba completado
@@ -41,15 +65,26 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['equipos'])) {
     }
 }
 
-mostrarHeader("Desafío 3 - Torneos");
+mostrarHeader("Desafío 3 - Formación de Equipos");
 ?>
 
 <main class="container">
     <section class="desafio-section">
-        <h2>⚔️ Desafío 3: Organizador de Torneos</h2>
-        <p>Configura un torneo gaming y genera los enfrentamientos automáticamente.</p>
+        <h2>⚔️ Desafío 3: Formación de Equipos para el Torneo</h2>
+        <p>¡Organiza a tus streamers en dos equipos equilibrados y descubre quiénes son los MVP!</p>
         
         <?php formularioTorneos($error, $resultado); ?>
+        
+        <?php if ($mostrar_equipos): ?>
+            <div class="torneo-section">
+                <?php mostrarEquiposTorneo($teamChaos, $teamOrder, $totalChaos, $totalOrder, $mvp, $rookie); ?>
+                
+                <div class="torneo-stats">
+                    <p class="success">✅ Torneo registrado en el log correctamente</p>
+                    <p class="success">🎉 ¡Desafío completado! Nivel subido a <?php echo obtenerNivelUsuario(); ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
     </section>
 </main>
 

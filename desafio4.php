@@ -1,5 +1,4 @@
 <?php
-
 require_once 'config.php';
 
 // Verificar logout
@@ -14,50 +13,82 @@ if(!isset($_SESSION['username_gamer'])) {
 }
 
 $error = '';
-$resultado = '';
-$ranking_data = array();
+$termino_busqueda = '';
+$streamer_encontrado = null;
+$mostrar_resultado = false;
 
-// Procesar formulario de rankings
-if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['streamers_data'])) {
-    $streamers_data = trim($_POST['streamers_data']);
+// Cargar roster existente o generar uno si no existe
+$roster = cargarRoster();
+if (empty($roster)) {
+    $roster = generarRosterStreamers();
+    guardarRoster($roster);
+}
+
+// Generar rankings
+$ranking_followers = generarRankingFollowers($roster);
+$ranking_alfabetico = generarRankingAlfabetico($roster);
+
+// Procesar búsqueda
+if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['buscar'])) {
+    $termino_busqueda = trim($_POST['busqueda']);
     
-    // Validar
-    if(empty($streamers_data)) {
-        $error = 'Debes ingresar los datos de los streamers';
+    // Validaciones
+    if (empty($termino_busqueda)) {
+        $error = 'Debes ingresar un username para buscar';
+    } elseif (strlen($termino_busqueda) < 3) {
+        $error = 'El término de búsqueda debe tener al menos 3 caracteres';
+    } elseif (!preg_match('/^[a-zA-Z0-9_-]+$/', $termino_busqueda)) {
+        $error = 'Solo se permiten letras, números, guiones y guiones bajos';
     } else {
-        // Procesar rankings
-        $ranking_data = procesarRankings($streamers_data);
+        // Realizar búsqueda
+        $streamer_encontrado = buscarStreamer($roster, $termino_busqueda);
+        $mostrar_resultado = true;
         
-        if(!empty($ranking_data)) {
-            $resultado = "¡Ranking generado correctamente!";
-            
-            // Registrar en log
-            $mensaje_log = "RANKING - Usuario: " . obtenerUsername() . ", Streamers procesados: " . count($ranking_data);
-            logAccion($mensaje_log);
-            
-            // Completar desafío si no estaba completado
-            if(!in_array(4, $_SESSION['desafios_completados'])) {
-                $_SESSION['desafios_completados'][] = 4;
-                $_SESSION['nivel_usuario']++;
-            }
-        } else {
-            $error = 'Error al procesar los datos. Verifica el formato.';
+        // Log de búsqueda
+        $encontrado = ($streamer_encontrado !== null);
+        logBusqueda($termino_busqueda, $encontrado);
+        
+        // Completar desafío si no estaba completado
+        if(!in_array(4, $_SESSION['desafios_completados'])) {
+            $_SESSION['desafios_completados'][] = 4;
+            $_SESSION['nivel_usuario']++;
         }
     }
 }
 
-mostrarHeader("Desafío 4 - Rankings");
+mostrarHeader("Desafío 4 - Rankings y Búsqueda");
 ?>
 
 <main class="container">
     <section class="desafio-section">
-        <h2>🏆 Desafío 4: Sistema de Rankings</h2>
-        <p>Genera rankings de streamers basados en sus estadísticas de viewers.</p>
+        <h2>🏆 Desafío 4: Rankings y Búsqueda de Legends</h2>
+        <p>Crea rankings oficiales y busca streamers específicos en tu crew.</p>
         
-        <?php formularioRankings($error, $resultado, $ranking_data); ?>
+        <?php formularioRankings($error, $termino_busqueda); ?>
+        
+        <?php if ($mostrar_resultado): ?>
+            <div class="resultado-section">
+                <?php mostrarResultadoBusqueda($streamer_encontrado, $termino_busqueda); ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="rankings-container">
+            <div class="rankings-grid">
+                <?php mostrarRankingFollowers($ranking_followers); ?>
+                <?php mostrarRankingAlfabetico($ranking_alfabetico); ?>
+            </div>
+        </div>
+        
+        <?php if ($mostrar_resultado || isset($_POST['buscar'])): ?>
+            <div class="desafio-completado">
+                <p class="success">✅ Búsqueda registrada en el log correctamente</p>
+                <p class="success">🎉 ¡Desafío completado! Nivel subido a <?php echo obtenerNivelUsuario(); ?></p>
+            </div>
+        <?php endif; ?>
     </section>
 </main>
 
 <?php
 mostrarFooter();
 ?>
+

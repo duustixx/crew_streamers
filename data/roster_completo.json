@@ -1,0 +1,72 @@
+[
+    {
+        "username": "TheGamer2024",
+        "nombre_real": "Alex Mart\u00ednez",
+        "followers": 82618,
+        "avatar": "1.png",
+        "juego_favorito": "Valorant"
+    },
+    {
+        "username": "ProPlayer99",
+        "nombre_real": "Sara Garc\u00eda",
+        "followers": 94319,
+        "avatar": "10.png",
+        "juego_favorito": "Fortnite"
+    },
+    {
+        "username": "EpicStreamer",
+        "nombre_real": "Carlos L\u00f3pez",
+        "followers": 8635,
+        "avatar": "11.png",
+        "juego_favorito": "Rocket League"
+    },
+    {
+        "username": "GameMaster",
+        "nombre_real": "Marta Rodr\u00edguez",
+        "followers": 87917,
+        "avatar": "12.png",
+        "juego_favorito": "Rocket League"
+    },
+    {
+        "username": "EliteWarrior",
+        "nombre_real": "David Fern\u00e1ndez",
+        "followers": 15313,
+        "avatar": "13.png",
+        "juego_favorito": "Among Us"
+    },
+    {
+        "username": "ShadowHunter",
+        "nombre_real": "Laura Gonz\u00e1lez",
+        "followers": 32469,
+        "avatar": "14.png",
+        "juego_favorito": "Fortnite"
+    },
+    {
+        "username": "NeonBlade",
+        "nombre_real": "Javier P\u00e9rez",
+        "followers": 40741,
+        "avatar": "15.png",
+        "juego_favorito": "Rocket League"
+    },
+    {
+        "username": "CyberNinja",
+        "nombre_real": "Elena S\u00e1nchez",
+        "followers": 96370,
+        "avatar": "16.png",
+        "juego_favorito": "Among Us"
+    },
+    {
+        "username": "PixelKing",
+        "nombre_real": "Daniel Romero",
+        "followers": 80442,
+        "avatar": "17.png",
+        "juego_favorito": "LOL"
+    },
+    {
+        "username": "StreamQueen",
+        "nombre_real": "Ana Torres",
+        "followers": 78908,
+        "avatar": "18.png",
+        "juego_favorito": "Among Us"
+    }
+]

@@ -22,3 +22,4 @@
 [2025-11-06 14:58:37] Sorteo - Viewers: 100, Ganadores: 7
 [2025-11-06 14:58:50] Sorteo - Viewers: 100, Ganadores: 5
 [2025-11-06 14:59:33] Sorteo - Viewers: 100, Ganadores: 6
+[2025-11-12 12:53:11] Sorteo - Viewers: 50, Ganadores: 5
