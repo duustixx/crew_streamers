@@ -527,17 +527,21 @@ function generarRosterStreamers() {
     $roster = array();
     
     for ($i = 0; $i < 10; $i++) {
-        $avatar = isset($avatares[$i]) ? basename($avatares[$i]) : 'default_avatar.jpg';
-        
-        $streamer = array(
-            'username' => $usernames[$i],
-            'nombre_real' => $nombres_reales[$i],
-            'followers' => rand(5000, 100000),
-            'avatar' => $avatar,
-            'juego_favorito' => $juegos[array_rand($juegos)]
-        );
-        $roster[] = $streamer;
+    if (isset($avatares[$i])) {
+        $avatar = basename($avatares[$i]);
+    } else {
+        $avatar = 'default_avatar.jpg';
     }
+    
+    $streamer = array(
+        'username' => $usernames[$i],
+        'nombre_real' => $nombres_reales[$i],
+        'followers' => rand(5000, 100000),
+        'avatar' => $avatar,
+        'juego_favorito' => $juegos[array_rand($juegos)]
+    );
+    $roster[] = $streamer;
+}
     
     return $roster;
 }
