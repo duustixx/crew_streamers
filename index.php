@@ -6,26 +6,36 @@ if (isset($_GET['logout']) && $_GET['logout'] == 'true') {
     logout();
 }
 
-// Si no tiene un Username, redirigir al formulario
-if(!isset($_SESSION['username_gamer']) && !isset($_POST['username'])){
-    mostrarLogin();
-}
-
-// Procesar formulario de Username
-if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'])){
-    $username = trim($_POST['username']);
-
-    // Validamos
-    if(empty($username)){
-        $error = 'Debes ingresar un username';
-    } elseif(!preg_match('/^[a-zA-Z0-9_-]{3,20}$/',$username)){
-        $error = "Solo se permiten letras, números, guiones y guiones bajos (3-20 caracteres)";
-    } else{
-        $_SESSION['username_gamer'] = htmlspecialchars($username);
-        header('Location: index.php');
-        exit;
+// SI NO ESTÁ LOGUEADO, MOSTRAR LOGIN/REGISTRO
+if (!isset($_SESSION['username_gamer'])) {
+    
+    // VERIFICAR SI VIENE DE FORMULARIO DE REGISTRO/LOGIN
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        
+        // PROCESAR REGISTRO
+        if (isset($_POST['registro'])) {
+            procesarRegistro();
+        }
+        
+        // PROCESAR LOGIN
+        if (isset($_POST['login'])) {
+            procesarLogin();
+        }
     }
+    
+    // VERIFICAR QUÉ MOSTRAR (LOGIN O REGISTRO)
+    if (isset($_GET['registro'])) {
+        mostrarFormularioRegistro();
+    } else {
+        mostrarFormularioLogin();
+    }
+    exit; // Importante salir aquí
 }
+
+// SI ESTÁ LOGUEADO, MOSTRAR DASHBOARD
+
+// Inicializar aplicación
+inicializarAplicacion();
 
 // Obtener datos usando las funciones de config.php
 $username = obtenerUsername();
@@ -38,7 +48,7 @@ mostrarHeader("Dashboard - " . $username);
 
 <main class="container">
     <?php
-    mostrarSeccionBienvenida($username,$racha,$visitas,$desafios_completados);
+    mostrarSeccionBienvenida($username, $racha, $visitas, $desafios_completados);
     mostrarSeccionStreamers();
     ?>
 </main>
@@ -46,3 +56,4 @@ mostrarHeader("Dashboard - " . $username);
 <?php
 // Mostrar footer usando la función de config.php
 mostrarFooter();
+?>

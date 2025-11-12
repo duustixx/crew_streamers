@@ -505,6 +505,281 @@ function mostrarLogin(){
     exit;
 }
 
+//Mostrar formulario de registro
+function mostrarFormularioRegistro($error = '') {
+    // Valores por defecto para los campos
+    $username_value = isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '';
+    $email_value = isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '';
+    
+    echo '
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Registro - Crew de Streamers</title>
+        <link rel="stylesheet" href="css/gaming-styles.css">
+    </head>
+    <body class="dark-theme">
+        <div class="login-container">
+            <h1>🎮 Crear Cuenta</h1>';
+            
+    if ($error) {
+        echo '<div class="error">' . $error . '</div>';
+    }
+    
+    echo '
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required 
+                           pattern="[a-zA-Z0-9_-]{3,20}" 
+                           title="3-20 caracteres, solo letras, números, - y _"
+                           value="' . $username_value . '">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required
+                           value="' . $email_value . '">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" name="password" required
+                           minlength="4"
+                           title="Mínimo 4 caracteres">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Repetir Contraseña:</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <button type="submit" name="registro" class="btn-neon">🚀 Registrarse</button>
+                
+                <div class="login-links">
+                    <p>¿Ya tienes cuenta? <a href="index.php">Iniciar Sesión</a></p>
+                </div>
+            </form>
+        </div>
+    </body>
+    </html>';
+    exit;
+}
+
+function mostrarFormularioLogin($error = '') {
+    // Ver si hay usuario recordado
+    $usuario_recordado = '';
+    if (isset($_COOKIE['usuario_recordado'])) {
+        $usuario_recordado = htmlspecialchars($_COOKIE['usuario_recordado']);
+    }
+    
+    $username_value = isset($_POST['username']) ? htmlspecialchars($_POST['username']) : $usuario_recordado;
+    
+    echo '
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Crew de Streamers</title>
+        <link rel="stylesheet" href="css/gaming-styles.css">
+    </head>
+    <body class="dark-theme">
+        <div class="login-container">
+            <h1>🎮 Iniciar Sesión</h1>';
+            
+    if ($error) {
+        echo '<div class="error">' . $error . '</div>';
+    }
+    
+    echo '
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required 
+                           value="' . $username_value . '">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="remember" name="remember" value="1" checked>
+                    <label for="remember">💾 Recordar username</label>
+                </div>
+                
+                <button type="submit" name="login" class="btn-neon">🎯 Entrar</button>
+                
+                <div class="login-links">
+                    <p>¿No tienes cuenta? <a href="index.php?registro=true">Regístrate aquí</a></p>
+                </div>
+            </form>
+        </div>
+    </body>
+    </html>';
+    exit;
+}
+
+function guardarUsuarioEnArchivo($username, $email, $password) {
+    // Crear carpeta data si no existe
+    if (!is_dir('data')) {
+        mkdir('data', 0777, true);
+    }
+    
+    $archivo_usuarios = 'data/usuarios.txt';
+    
+    // Verificar si el usuario ya existe (MEJORADO)
+    if (file_exists($archivo_usuarios)) {
+        $lineas = file($archivo_usuarios, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        
+        foreach ($lineas as $linea) {
+            $datos = explode('|', $linea);
+            if (isset($datos[0]) && $datos[0] === $username) {
+                return false; // Usuario ya existe
+            }
+        }
+    }
+    
+    // Guardar usuario en formato simple: username|email|password
+    $linea = $username . '|' . $email . '|' . $password . PHP_EOL;
+    
+    // Usar FILE_APPEND para añadir al final
+    if (file_put_contents($archivo_usuarios, $linea, FILE_APPEND | LOCK_EX) !== false) {
+        return true;
+    }
+    
+    return false;
+}
+
+function verificarUsuario($username, $password) {
+    $archivo_usuarios = 'data/usuarios.txt';
+    
+    if (!file_exists($archivo_usuarios)) {
+        return false;
+    }
+    
+    $lineas = file($archivo_usuarios, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    
+    foreach ($lineas as $linea) {
+        $datos = explode('|', $linea);
+        
+        // Verificar que tenemos exactamente 3 partes
+        if (count($datos) === 3) {
+            $user = trim($datos[0]);
+            $email = trim($datos[1]);
+            $pass = trim($datos[2]);
+            
+            // Verificar usuario y contraseña (sin hash)
+            if ($user === $username && $pass === $password) {
+                return array(
+                    'username' => $user,
+                    'email' => $email
+                );
+            }
+        }
+    }
+    
+    return false;
+}
+
+function procesarRegistro() {
+    $error = '';
+    
+    // Obtener datos del formulario
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+    
+    // VALIDACIONES BÁSICAS
+    if (empty($username) || empty($email) || empty($password)) {
+        $error = "Todos los campos son obligatorios";
+    }
+    elseif (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $username)) {
+        $error = "El username debe tener 3-20 caracteres y solo letras, números, - y _";
+    }
+    elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "El email no tiene formato válido";
+    }
+    elseif (strlen($password) < 4) {
+        $error = "La contraseña debe tener al menos 4 caracteres";
+    }
+    elseif ($password !== $confirm_password) {
+        $error = "Las contraseñas no coinciden";
+    }
+    
+    // Si hay error, mostrar formulario con error
+    if ($error) {
+        mostrarFormularioRegistro($error);
+    }
+    
+    // Intentar guardar usuario
+    if (guardarUsuarioEnArchivo($username, $email, $password)) {
+        // Registro exitoso - crear sesión
+        $_SESSION['username_gamer'] = $username;
+        $_SESSION['email_usuario'] = $email;
+        $_SESSION['nivel_usuario'] = 1;
+        $_SESSION['desafios_completados'] = array();
+        $_SESSION['timestamp_inicio'] = time();
+        
+        // Redirigir al dashboard (CON HEADER CORRECTO)
+        header('Location: index.php');
+        exit;
+        
+    } else {
+        $error = "El username '$username' ya existe. Elige otro.";
+        mostrarFormularioRegistro($error);
+    }
+}
+
+//Función para procesar login
+function procesarLogin() {
+    $error = '';
+    
+    // Obtener datos del formulario
+    $username = trim($_POST['username']);
+    $password = $_POST['password'];
+    $remember = isset($_POST['remember']);
+    
+    // Validaciones básicas
+    if (empty($username) || empty($password)) {
+        $error = "Username y contraseña son obligatorios";
+        mostrarFormularioLogin($error);
+    }
+    
+    // Verificar usuario
+    $usuario = verificarUsuario($username, $password);
+    
+    if ($usuario) {
+        // Login exitoso - crear sesión
+        $_SESSION['username_gamer'] = $usuario['username'];
+        $_SESSION['email_usuario'] = $usuario['email'];
+        $_SESSION['nivel_usuario'] = 1;
+        $_SESSION['desafios_completados'] = array();
+        $_SESSION['timestamp_inicio'] = time();
+        
+        // Guardar cookie de "recordar username" si se marcó
+        if ($remember) {
+            setcookie('usuario_recordado', $username, time() + (30 * 24 * 60 * 60), '/');
+        } else {
+            // Si no marcó recordar, borrar la cookie si existe
+            setcookie('usuario_recordado', '', time() - 3600, '/');
+        }
+        
+        // Redirigir al dashboard
+        header('Location: index.php');
+        exit;
+        
+    } else {
+        $error = "Username o contraseña incorrectos";
+        mostrarFormularioLogin($error);
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // FUNCION PARA DESAFIO 3
 /////////////////////////////////////////////////////////////////////////////////////////
