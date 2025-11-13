@@ -48,13 +48,13 @@ function logAccion($mensaje) {
 
 function iniciarSesionUsuario() {
     if (!isset($_SESSION['username_gamer'])) {
-        $_SESSION['nivel_usuario'] = 1;
+        $_SESSION['nivel_usuario'] = 0;
         $_SESSION['desafios_completados'] = array();
         $_SESSION['timestamp_inicio'] = time();
     } else {
         // Asegurar que nivel_usuario existe incluso para usuarios ya logueados
         if (!isset($_SESSION['nivel_usuario'])) {
-            $_SESSION['nivel_usuario'] = 1;
+            $_SESSION['nivel_usuario'] = 0;
         }
         if (!isset($_SESSION['desafios_completados'])) {
             $_SESSION['desafios_completados'] = array();
@@ -167,7 +167,7 @@ function obtenerNivelUsuario() {
     if (isset($_SESSION['nivel_usuario'])) {
         return $_SESSION['nivel_usuario'];
     } else {
-        return 1;
+        return 0;
     }
 }
 
@@ -722,12 +722,12 @@ function procesarRegistro() {
         // Registro exitoso - crear sesión
         $_SESSION['username_gamer'] = $username;
         $_SESSION['email_usuario'] = $email;
-        $_SESSION['nivel_usuario'] = 1;
+        $_SESSION['nivel_usuario'] = 0;
         $_SESSION['desafios_completados'] = array();
         $_SESSION['timestamp_inicio'] = time();
         
         // GUARDAR PROGRESO INICIAL
-        guardarProgresoUsuario($username, 1, array());
+        guardarProgresoUsuario($username, 0, array());
         
         // Redirigir al dashboard (CON HEADER CORRECTO)
         header('Location: index.php');
@@ -837,7 +837,7 @@ function cargarProgresoUsuario($username) {
     $archivo_progreso = 'data/progreso_usuarios.txt';
 
     if(!file_exists($archivo_progreso)) {
-        return array('nivel' => 1, 'desafios' => array());
+        return array('nivel' => 0, 'desafios' => array());
     }
 
     $lineas = file($archivo_progreso, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -854,7 +854,7 @@ function cargarProgresoUsuario($username) {
     }
 
     //Si no encuentra progreso, devolver valores por defecto
-    return array('nivel' => 1, 'desafios' => array());
+    return array('nivel' => 0, 'desafios' => array());
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
