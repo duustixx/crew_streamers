@@ -65,48 +65,75 @@ function iniciarSesionUsuario() {
 /////////////////////////////////////////////////////////////////////////////////////////
 // FUNCION PARA GESTIONAR RACHA
 /////////////////////////////////////////////////////////////////////////////////////////
-
 function gestionarRacha(){
-    $hoy = date('Y-m-d');
-    
-    // Si es la primera vez del usuario, inicializar racha
-    if(!isset($_COOKIE['racha_dias'])) {
-        setcookie('racha_dias', 1, time() + (30 * 24 * 60 * 60), '/');
-        setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
+    // Si no hay usuario logueado, no hacer nada
+    if(!isset($_SESSION['username_gamer'])) {
         return 1;
     }
     
-    $ultima_visita = $_COOKIE['ultima_visita'];
-    $racha_actual = $_COOKIE['racha_dias'];
+    $username = $_SESSION['username_gamer'];
+    $hoy = date('Y-m-d');
     
-    // Si ya visitó hoy, mantener la racha
-    if ($ultima_visita == $hoy) {
+    // Nombres de cookies únicos por usuario
+    $cookie_racha = 'racha_dias_' . $username;
+    $cookie_visita = 'ultima_visita_' . $username;
+    
+    // PRIMERA VEZ - No existe la cookie de última visita para este usuario
+    if(!isset($_COOKIE[$cookie_visita])) {
+        setcookie($cookie_racha, 1, time() + (30 * 24 * 60 * 60), '/');
+        setcookie($cookie_visita, $hoy, time() + (30 * 24 * 60 * 60), '/');
+        return 1;
+    }
+    
+    $ultima_visita = $_COOKIE[$cookie_visita];
+    $racha_actual = isset($_COOKIE[$cookie_racha]) ? (int)$_COOKIE[$cookie_racha] : 1;
+    
+    // SI YA VISITÓ HOY - Mantener racha
+    if ($ultima_visita === $hoy) {
         return $racha_actual;
     }
     
-    // Calcular días desde la última visita
-    $fecha_ultima = DateTime::createFromFormat('Y-m-d', $ultima_visita);
-    $fecha_hoy = DateTime::createFromFormat('Y-m-d', $hoy);
-    $diferencia = $fecha_hoy->diff($fecha_ultima);
-    $dias_diferencia = $diferencia->days;
+    // CALCULAR SI VISITÓ AYER
+    $ayer = date('Y-m-d', strtotime('-1 day'));
     
-    // Si la última visita fue ayer, incrementar racha
-    if ($dias_diferencia == 1) {
+    if ($ultima_visita === $ayer) {
+        // Visitó ayer - incrementar racha
         $nueva_racha = $racha_actual + 1;
-        setcookie('racha_dias', $nueva_racha, time() + (30 * 24 * 60 * 60), '/');
-        setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
+        setcookie($cookie_racha, $nueva_racha, time() + (30 * 24 * 60 * 60), '/');
+        setcookie($cookie_visita, $hoy, time() + (30 * 24 * 60 * 60), '/');
         return $nueva_racha;
-    } 
-    // Si hay más de 1 día de diferencia, reiniciar racha
-    elseif ($dias_diferencia > 1) {
-        setcookie('racha_dias', 1, time() + (30 * 24 * 60 * 60), '/');
-        setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
+    } else {
+        // Saltó días - reiniciar a 1
+        setcookie($cookie_racha, 1, time() + (30 * 24 * 60 * 60), '/');
+        setcookie($cookie_visita, $hoy, time() + (30 * 24 * 60 * 60), '/');
+        return 1;
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCIÓN PARA RESETEAR RACHA (PARA USUARIOS NUEVOS)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function resetearRachaUsuario() {
+    if(!isset($_SESSION['username_gamer'])) {
         return 1;
     }
     
-    // Por defecto, mantener racha actual
-    setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
-    return $racha_actual;
+    $username = $_SESSION['username_gamer'];
+    $hoy = date('Y-m-d');
+    
+    // Nombres de cookies únicos por usuario
+    $cookie_racha = 'racha_dias_' . $username;
+    $cookie_visita = 'ultima_visita_' . $username;
+    
+    // Eliminar cookies existentes de este usuario
+    setcookie($cookie_racha, '', time() - 3600, '/');
+    setcookie($cookie_visita, '', time() - 3600, '/');
+    
+    // Crear cookies nuevas para usuario nuevo
+    setcookie($cookie_racha, 1, time() + (30 * 24 * 60 * 60), '/');
+    setcookie($cookie_visita, $hoy, time() + (30 * 24 * 60 * 60), '/');
+    
+    return 1;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -156,12 +183,23 @@ function obtenerDesafiosCompletados() {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 function obtenerRacha() {
-    if(isset($_COOKIE['racha_dias'])){
-        return $_COOKIE['racha_dias'];
+    // Si no hay usuario logueado, devolver 1
+    if(!isset($_SESSION['username_gamer'])) {
+        return 1;
+    }
+    
+    $username = $_SESSION['username_gamer'];
+    $cookie_racha = 'racha_dias_' . $username;
+    
+    // Verificar si tenemos cookie para este usuario
+    if(isset($_COOKIE[$cookie_racha])) {
+        return (int)$_COOKIE[$cookie_racha];
     } else {
+        // Si no hay cookie, devolver 1 (primera vez)
         return 1;
     }
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // FUNCION PARA OBTENER NIVEL USUARIO
@@ -200,6 +238,9 @@ function logout() {
 
         $mensaje_log = "LOGOUT - Usuario: $username, Duración sesión: $minutos minutos, Nivel: " . obtenerNivelUsuario();
         logAccion($mensaje_log);
+        
+        // NO eliminar las cookies de racha al hacer logout
+        // Así se mantiene la racha entre sesiones
     }
 
     // Destruir todas las variables de sesión
@@ -418,14 +459,17 @@ function formularioDesafio2($mensaje, $streamers) {
 }
 
 //Mostrar la seccion de bienvenida:
-function mostrarSeccionBienvenida($username, $racha, $visitas, $desafios_completados) {
+function mostrarSeccionBienvenida($username, $visitas, $desafios_completados) {
+    // Obtener racha actual
+    $racha_actual = obtenerRacha();
+    
     echo '
     <section class="welcome-section">
         <h2>¡Bienvenido de nuevo, ' . htmlspecialchars($username) . '! 👋</h2>
         <div class="stats-grid">
             <div class="stat-card">
                 <h3>🔥 Racha Actual</h3>
-                <p class="stat-number">' . $racha . ' días</p>
+                <p class="stat-number">' . $racha_actual . ' días</p>
             </div>
             <div class="stat-card">
                 <h3>👥 Total Visitas</h3>
@@ -723,6 +767,9 @@ function procesarRegistro() {
     
     // Intentar guardar usuario
     if (guardarUsuarioEnArchivo($username, $email, $password)) {
+        // ✅ RESETEAR RACHA PARA USUARIO NUEVO
+        resetearRachaUsuario();
+        
         // Registro exitoso - crear sesión
         $_SESSION['username_gamer'] = $username;
         $_SESSION['email_usuario'] = $email;
@@ -733,7 +780,7 @@ function procesarRegistro() {
         // GUARDAR PROGRESO INICIAL
         guardarProgresoUsuario($username, 0, array());
         
-        // Redirigir al dashboard (CON HEADER CORRECTO)
+        // Redirigir al dashboard
         header('Location: index.php');
         exit;
         
@@ -744,6 +791,7 @@ function procesarRegistro() {
 }
 
 //Función para procesar login
+
 function procesarLogin() {
     $error = '';
     
@@ -771,6 +819,9 @@ function procesarLogin() {
         $_SESSION['nivel_usuario'] = $progreso['nivel'];
         $_SESSION['desafios_completados'] = $progreso['desafios'];
         $_SESSION['timestamp_inicio'] = time();
+        
+        // ✅ FORZAR ACTUALIZACIÓN DE RACHA DESPUÉS DEL LOGIN
+        $racha_actual = gestionarRacha();
         
         // Guardar cookie de "recordar username" si se marcó
         if ($remember) {

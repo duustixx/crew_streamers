@@ -48,7 +48,7 @@ mostrarHeader("Dashboard - " . $username);
 
 <main class="container">
     <?php
-    mostrarSeccionBienvenida($username, $racha, $visitas, $desafios_completados);
+    mostrarSeccionBienvenida($username,$visitas, $desafios_completados);
     mostrarSeccionStreamers();
     ?>
 </main>
