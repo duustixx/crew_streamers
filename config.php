@@ -68,41 +68,45 @@ function iniciarSesionUsuario() {
 
 function gestionarRacha(){
     $hoy = date('Y-m-d');
-
-    if(isset($_COOKIE['ultima_visita'])){
-        $ultima_visita = $_COOKIE['ultima_visita'];
-
-        // Si la ultima visita fue ayer la racha incrementara
-        $ayer = date('Y-m-d', strtotime('-1 day'));
-        if($ultima_visita == $ayer){
-            if(isset($_COOKIE['racha_dias'])){
-                $racha_actual = $_COOKIE['racha_dias'] + 1;
-            } else {
-                $racha_actual = 2;
-            }
-            setcookie('racha_dias', $racha_actual, time() + (30 * 24 * 60 * 60), '/');
-        }
-        // Si la utlima visita es hoy, mantenemos racha
-        elseif ($ultima_visita == $hoy) {
-            // No hacemos nada, mantenemos la racha
-        } else {
-            // Si hay mas de 1 dia de diferencia, la racha se reiniciara
-            setcookie('racha_dias', 1, time() + (30 * 24 * 60 * 60), '/');
-        }
-    } else {
-        // Primera Visita
+    
+    // Si es la primera vez del usuario, inicializar racha
+    if(!isset($_COOKIE['racha_dias'])) {
         setcookie('racha_dias', 1, time() + (30 * 24 * 60 * 60), '/');
-    }
-
-    // Actualizamos la ultima visita
-    setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
-
-    // Devolvemos la racha actual
-    if (isset($_COOKIE['racha_dias'])) {
-        return $_COOKIE['racha_dias'];
-    } else {
+        setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
         return 1;
     }
+    
+    $ultima_visita = $_COOKIE['ultima_visita'];
+    $racha_actual = $_COOKIE['racha_dias'];
+    
+    // Si ya visitó hoy, mantener la racha
+    if ($ultima_visita == $hoy) {
+        return $racha_actual;
+    }
+    
+    // Calcular días desde la última visita
+    $fecha_ultima = DateTime::createFromFormat('Y-m-d', $ultima_visita);
+    $fecha_hoy = DateTime::createFromFormat('Y-m-d', $hoy);
+    $diferencia = $fecha_hoy->diff($fecha_ultima);
+    $dias_diferencia = $diferencia->days;
+    
+    // Si la última visita fue ayer, incrementar racha
+    if ($dias_diferencia == 1) {
+        $nueva_racha = $racha_actual + 1;
+        setcookie('racha_dias', $nueva_racha, time() + (30 * 24 * 60 * 60), '/');
+        setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
+        return $nueva_racha;
+    } 
+    // Si hay más de 1 día de diferencia, reiniciar racha
+    elseif ($dias_diferencia > 1) {
+        setcookie('racha_dias', 1, time() + (30 * 24 * 60 * 60), '/');
+        setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
+        return 1;
+    }
+    
+    // Por defecto, mantener racha actual
+    setcookie('ultima_visita', $hoy, time() + (30 * 24 * 60 * 60), '/');
+    return $racha_actual;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
