@@ -1,4 +1,4 @@
-duustixx|0|
+duustixx|1|2
 Jose777|1|
 Jose774|4|1,2,3
 Wenfu888|1|
@@ -8,3 +8,5 @@ killercreeper55|0|
 jose123|0|
 wenfuuuu|0|
 Khawar|20|1,3,4
+dasdsad|29|1,3,4
+kikemontilla|4|1,2,3,4
