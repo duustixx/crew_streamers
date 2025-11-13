@@ -726,6 +726,9 @@ function procesarRegistro() {
         $_SESSION['desafios_completados'] = array();
         $_SESSION['timestamp_inicio'] = time();
         
+        // GUARDAR PROGRESO INICIAL
+        guardarProgresoUsuario($username, 1, array());
+        
         // Redirigir al dashboard (CON HEADER CORRECTO)
         header('Location: index.php');
         exit;
@@ -755,11 +758,14 @@ function procesarLogin() {
     $usuario = verificarUsuario($username, $password);
     
     if ($usuario) {
-        // Login exitoso - crear sesión
+        // CARGAR PROGRESO DEL USUARIO
+        $progreso = cargarProgresoUsuario($username);
+        
+        // Login exitoso - crear sesión CON PROGRESO GUARDADO
         $_SESSION['username_gamer'] = $usuario['username'];
         $_SESSION['email_usuario'] = $usuario['email'];
-        $_SESSION['nivel_usuario'] = 1;
-        $_SESSION['desafios_completados'] = array();
+        $_SESSION['nivel_usuario'] = $progreso['nivel'];
+        $_SESSION['desafios_completados'] = $progreso['desafios'];
         $_SESSION['timestamp_inicio'] = time();
         
         // Guardar cookie de "recordar username" si se marcó
@@ -779,6 +785,91 @@ function procesarLogin() {
         mostrarFormularioLogin($error);
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCION PARA GUARDAR PROGRESO DE USUARIO  
+/////////////////////////////////////////////////////////////////////////////////////////
+
+
+function guardarProgresoUsuario($username, $nivel, $desafios_completados) {
+    $archivo_progreso = 'data/progreso_usuarios.txt';
+
+    if(!is_dir('data')) {
+        mkdir('data', 0777, true);
+    }
+
+    //Leer progreso existente
+    $progreso = array();
+    if(file_exists($archivo_progreso)) {
+        $lineas = file($archivo_progreso, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach($lineas as $linea) {
+            $datos = explode('|', $linea);
+            if(count($datos) >= 3) {
+                $progreso[$datos[0]] = array (
+                    'nivel' => $datos[1],
+                    'desafios' => $datos[2]
+                );
+            }
+        }
+    }
+
+    //Actualizar progreso del usuario
+    $progreso[$username] = array(
+        'nivel' => $nivel,
+        'desafios' => implode(',', $desafios_completados)
+    );
+
+    //Guardar todo el progreso
+    $contenido = '';
+    foreach($progreso as $user => $datos) {
+        $contenido .= $user . '|' . $datos['nivel'] . '|' . $datos['desafios'] . PHP_EOL;
+    }
+
+    file_put_contents($archivo_progreso, $contenido);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCION PARA CARGAR PROGRESO DE USUARIO  
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function cargarProgresoUsuario($username) {
+    $archivo_progreso = 'data/progreso_usuarios.txt';
+
+    if(!file_exists($archivo_progreso)) {
+        return array('nivel' => 1, 'desafios' => array());
+    }
+
+    $lineas = file($archivo_progreso, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach($lineas as $linea) {
+        $datos = explode('|', $linea);
+        if(count($datos) >= 3 && $datos[0] === $username) {
+            $desafios_array = !empty($datos[2]) ? explode (',', $datos[2]) : array();
+            return array(
+                'nivel' => intval($datos[1]),
+                'desafios' => $desafios_array
+            );
+        }
+    }
+
+    //Si no encuentra progreso, devolver valores por defecto
+    return array('nivel' => 1, 'desafios' => array());
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCION PARA ACTUALIZAR PROGRESO DE USUARIO  
+/////////////////////////////////////////////////////////////////////////////////////////
+function actualizarProgresoUsuario() {
+    if(isset($_SESSION['username_gamer'])) {
+        $username = $_SESSION['username_gamer'];
+        $nivel = $_SESSION['nivel_usuario'];
+        $desafios = $_SESSION['desafios_completados'];
+
+        guardarProgresoUsuario($username, $nivel, $desafios);
+    }
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // FUNCION PARA DESAFIO 3

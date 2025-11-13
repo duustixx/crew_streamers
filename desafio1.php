@@ -54,6 +54,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['viewers'])) {
                     $ganadores = [];
                     foreach ($indices_aleatorios as $indice) {
                         $ganadores[] = $avatares[$indice];
+
+                        $fecha = date('Y-m-d H:i:s');
+                        $log_msg = "[$fecha] Sorteo - Viewers: $viewers, Ganadores: $num_ganadores";
+                        escribirTXT('logs/sorteos.txt', $log_msg);
+
+                        if(!in_array(1, $_SESSION['desafios_completados'])) {
+                            $_SESSION['desafios_completados'][] = 1;
+                            $_SESSION['nivel_usuario']++;
+
+                            actualizarProgresoUsuario();
+                        }
                     }
                 }
                 

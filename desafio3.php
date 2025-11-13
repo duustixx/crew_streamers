@@ -48,6 +48,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         $teamOrder = $equipos['order'];
         $totalChaos = calcularTotalFollowers($teamChaos);
         $totalOrder = calcularTotalFollowers($teamOrder);
+
+        $mensaje_log = "TORNEO - Usuario: " . obtenerUsername() .
+                        ", Team Chaos: " . count($teamChaos) . " streamers, " . $totalChaos . " followers" .
+                        ", Team Order: " . count($teamOrder) . " streamers, " . $totalOrder . " followers";
+        logAccion($mensaje_log);
+
+        if(!in_array(3, $_SESSION['desafios_completados'])) {
+            $_SESSION['desafios_completados'][] = 3;
+            $_SESSION['nivel_usuario']++;
+
+            actualizarProgresoUsuario();
+        }
+
         $mvp = encontrarMVP($roster);
         $rookie = encontrarRookie($roster);
         

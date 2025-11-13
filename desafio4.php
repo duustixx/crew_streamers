@@ -44,6 +44,17 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['buscar'])) {
         $streamer_encontrado = buscarStreamer($roster, $termino_busqueda);
         $mostrar_resultado = true;
         
+        $encontrado = ($streamer_encontrado !== null);
+        logBusqueda($termino_busqueda, $encontrado);
+
+        if(!in_array(4, $_SESSION['desafios_completados'])) {
+            $_SESSION['desafios_completados'][] = 4;
+            $_SESSION['nivel_usuario']++;
+
+            actualizarProgresoUsuario();
+        }
+
+
         // Log de búsqueda
         $encontrado = ($streamer_encontrado !== null);
         logBusqueda($termino_busqueda, $encontrado);

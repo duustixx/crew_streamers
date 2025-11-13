@@ -41,6 +41,15 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rotar'])) {
 
         $mensaje = "✅ Lista de featured actualizada correctamente";
 
+        if(!in_array(2, $_SESSION['desafios_completados'])) {
+            $_SESSION['desafios_completados'];
+            $_SESSION['nivel_usuario']++;
+
+            actualizarProgresoUsuario();
+        }
+
+        $mensaje = "✅ Lista de featured actualizada correctamente";
+
         //Marcar desafío como completado
         if(!in_array(2, $_SESSION['desafios_completados'])) {
             $_SESSION['desafios_completados'][] = 2;
