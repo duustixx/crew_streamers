@@ -1324,3 +1324,192 @@ function formularioRankings($error, $termino_busqueda = '') {
     
     echo '</div>';
 }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FUNCION PARA DESAFIO 5 
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function obtenerJuegosFavoritos($roster) {
+    $juegos = array();
+    foreach ($roster as $streamer) {
+        $juegos[] = $streamer['juego_favorito'];
+    }
+    
+    // Eliminar duplicados y convertir a string
+    $juegos_unicos = array_unique($juegos);
+    $juegos_string = implode(' | ', $juegos_unicos);
+    
+    // Guardar en archivo
+    escribirTXT('data/juegos_trending.txt', "🎮 Juegos más jugados: " . $juegos_string);
+    
+    return $juegos_string;
+}
+
+function cargarSponsors() {
+    $archivo = 'data/sponsors.txt';
+    
+    // Si el archivo no existe, crear con sponsors por defecto
+    if (!file_exists($archivo)) {
+        $sponsors_default = "Red Bull Gaming;Logitech G;HyperX;Razer;NVIDIA;Corsair;SteelSeries";
+        file_put_contents($archivo, $sponsors_default);
+    }
+    
+    $contenido = file_get_contents($archivo);
+    
+    // Si el contenido está vacío, usar sponsors por defecto
+    if (empty(trim($contenido))) {
+        $contenido = "Red Bull Gaming;Logitech G;HyperX;Razer;NVIDIA;Corsair;SteelSeries";
+        file_put_contents($archivo, $contenido);
+    }
+    
+    $sponsors_array = explode(';', $contenido);
+    
+    // Limpiar espacios en blanco
+    $sponsors_limpios = array();
+    foreach ($sponsors_array as $sponsor) {
+        $sponsor_limpio = trim($sponsor);
+        if (!empty($sponsor_limpio)) {
+            $sponsors_limpios[] = $sponsor_limpio;
+        }
+    }
+    
+    // Si después de limpiar está vacío, usar sponsors por defecto
+    if (empty($sponsors_limpios)) {
+        $sponsors_limpios = array(
+            "Red Bull Gaming", "Logitech G", "HyperX", "Razer", 
+            "NVIDIA", "Corsair", "SteelSeries"
+        );
+        file_put_contents($archivo, implode(';', $sponsors_limpios));
+    }
+    
+    return $sponsors_limpios;
+}
+
+function asignarSponsors($roster, $sponsors) {
+    $roster_con_sponsors = array();
+    
+    // Asegurarnos de que hay sponsors disponibles
+    if (empty($sponsors)) {
+        $sponsors = array("Sin Sponsor");
+    }
+    
+    foreach ($roster as $streamer) {
+        $sponsor_aleatorio = $sponsors[array_rand($sponsors)];
+        $streamer['sponsor'] = $sponsor_aleatorio;
+        $roster_con_sponsors[] = $streamer;
+    }
+    
+    return $roster_con_sponsors;
+}
+
+function guardarColaboracionesCSV($roster_con_sponsors) {
+    $archivo = 'data/colaboraciones.csv';
+    $contenido = "username,nombre_real,sponsor,followers,juego\n";
+    
+    foreach ($roster_con_sponsors as $streamer) {
+        $linea = array(
+            $streamer['username'],
+            $streamer['nombre_real'],
+            $streamer['sponsor'],
+            $streamer['followers'],
+            $streamer['juego_favorito']
+        );
+        $contenido .= implode(',', $linea) . "\n";
+    }
+    
+    file_put_contents($archivo, $contenido);
+}
+
+function mostrarTablaColaboraciones($roster_con_sponsors) {
+    echo '<div class="tabla-colaboraciones">';
+    echo '<h4>💼 Colaboraciones Actuales</h4>';
+    echo '<div class="table-container">';
+    echo '<table class="sponsors-table">';
+    echo '<thead>
+            <tr>
+                <th>STREAMER</th>
+                <th>SPONSOR</th>
+                <th>FOLLOWERS</th>
+                <th>JUEGO FAVORITO</th>
+            </tr>
+          </thead>
+          <tbody>';
+    
+    foreach ($roster_con_sponsors as $streamer) {
+        echo '<tr>
+                <td>
+                    <div class="streamer-cell">
+                        <img src="imagenes/streamers/' . $streamer['avatar'] . '" alt="' . $streamer['username'] . '">
+                        <div>
+                            <strong>' . $streamer['username'] . '</strong>
+                            <br><small>' . $streamer['nombre_real'] . '</small>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="sponsor-badge">' . $streamer['sponsor'] . '</span></td>
+                <td class="followers-cell">' . number_format($streamer['followers']) . '</td>
+                <td class="juego-cell">🎮 ' . $streamer['juego_favorito'] . '</td>
+              </tr>';
+    }
+    
+    echo '</tbody></table>';
+    echo '</div>';
+    echo '</div>';
+}
+
+function mostrarJuegosTrending($juegos_string) {
+    echo '<div class="juegos-trending">';
+    echo '<h4>🎮 Juegos más jugados</h4>';
+    echo '<div class="juegos-lista">';
+    echo '<p>' . $juegos_string . '</p>';
+    echo '</div>';
+    echo '</div>';
+}
+
+function mostrarListaSponsors($sponsors) {
+    echo '<div class="lista-sponsors">';
+    echo '<h4>🏢 Sponsors Disponibles</h4>';
+    echo '<div class="sponsors-grid">';
+    
+    foreach ($sponsors as $sponsor) {
+        echo '<div class="sponsor-item">' . $sponsor . '</div>';
+    }
+    
+    echo '</div>';
+    echo '</div>';
+}
+
+function formularioSponsors($error, $success) {
+    echo '
+    <div class="form-sponsors">
+        <h4>💼 Añadir nuevo sponsor al roster</h4>
+        <form method="POST" class="sponsor-form">
+            <div class="form-group">
+                <input type="text" name="nuevo_sponsor" placeholder="Nombre del sponsor (ej: MSI Gaming)" 
+                       required pattern="[a-zA-Z0-9\s]{3,50}"
+                       title="Solo letras, números y espacios (3-50 caracteres)">
+                <button type="submit" name="añadir_sponsor" class="btn-neon">➕ Añadir Sponsor</button>
+            </div>
+        </form>';
+    
+    if ($error) {
+        echo '<div class="error">' . $error . '</div>';
+    }
+    
+    if ($success) {
+        echo '<div class="success">' . $success . '</div>';
+    }
+    
+    echo '</div>';
+}
+
+function descargarReporteCSV() {
+    $archivo = 'data/colaboraciones.csv';
+    if (file_exists($archivo)) {
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="reporte_colaboraciones.csv"');
+        readfile($archivo);
+        exit;
+    }
+}
